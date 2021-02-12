@@ -41,11 +41,11 @@ log.info Schema.params_summary_log(workflow, params, json_schema)
 /*          INCLUDE MODULES FOR TESTING           */
 ////////////////////////////////////////////////////
 
-include { BWA_INDEX } from './modules/nf-core/software/bwa/index' params(params)
-include { BWA_MEM } from './modules/nf-core/software/bwa/mem' params(params)
-include { PICARD_MARKDUPLICATES } from './modules/nf-core/software/picard/markduplicates' params(params)
-include { SALMON_INDEX } from './modules/nf-core/software/salmon/index' params(params)
-include { SALMON_QUANT } from './modules/nf-core/software/salmon/quant' params(params)
+include { BWA_INDEX } from './modules/nf-core-mod/software/bwa/index' params(params)
+include { BWA_MEM } from './modules/nf-core-mod/software/bwa/mem' params(params)
+include { PICARD_MARKDUPLICATES } from './modules/nf-core-mod/software/picard/markduplicates' params(params)
+include { SALMON_INDEX } from './modules/nf-core-mod/software/salmon/index' params(params)
+include { SALMON_QUANT } from './modules/nf-core-mod/software/salmon/quant' params(params)
 
 
 workflow DNA {
