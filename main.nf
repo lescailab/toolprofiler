@@ -41,11 +41,11 @@ log.info Schema.params_summary_log(workflow, params, json_schema)
 /*          INCLUDE MODULES FOR TESTING           */
 ////////////////////////////////////////////////////
 
-include { BWA_INDEX } from './modules/nf-core-mod/software/bwa/index' params(params)
-include { BWA_MEM } from './modules/nf-core-mod/software/bwa/mem' params(params)
-include { PICARD_MARKDUPLICATES } from './modules/nf-core-mod/software/picard/markduplicates' params(params)
-include { SALMON_INDEX } from './modules/nf-core-mod/software/salmon/index' params(params)
-include { SALMON_QUANT } from './modules/nf-core-mod/software/salmon/quant' params(params)
+include { BWA_INDEX } from './modules/nf-core-mod/software/bwa/index' addParams(bwa_index_options)
+include { BWA_MEM } from './modules/nf-core-mod/software/bwa/mem' addParams(bwa_mem_options)
+include { PICARD_MARKDUPLICATES } from './modules/nf-core-mod/software/picard/markduplicates' addParams(markduplicates_options)
+include { SALMON_INDEX } from './modules/nf-core-mod/software/salmon/index' addParams(salmon_index_options)
+include { SALMON_QUANT } from './modules/nf-core-mod/software/salmon/quant' addParams(salmon_quant_options)
 
 
 workflow DNA {
@@ -54,7 +54,15 @@ workflow DNA {
 
 
 workflow RNA {
-
+    // Check mandatory parameters
+    if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
+    if (params.fasta) { ch_fasta = file(params.fasta) } else { exit 1, 'Genome fasta file not specified!' }
+    if (params.transcript_fasta) { ch_transcript_fasta = file(params.transcript_fasta) } else { exit 1, 'Transcript fasta file not specified!' }
+    if (!params.gtf) { exit 1, "No GTF annotation specified!" }
+    
+    ch_salmon_index   = Channel.empty()
+    ch_salmon_index   = SALMON_INDEX( ch_fasta, ch_transcript_fasta ).index
+    SALMON_QUANT( reads, ch_salmon_index, gtf, ch_transcript_fasta, alignment_mode)
     
 }
 
