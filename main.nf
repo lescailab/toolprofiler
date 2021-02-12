@@ -57,12 +57,13 @@ include { SALMON_QUANT } from './modules/nf-core-mod/software/salmon/quant' addP
 workflow DNA {
     take:
         inputSample
+        resources // tuple val(cores), val(mem)
 
     if (params.fasta) { ch_fasta = file(params.fasta) } else { exit 1, 'Genome fasta file not specified!' }
     ch_bwa_index = Channel.empty()
-    ch_bwa_index = BWA_INDEX(ch_fasta).index
-    BWA_MEM(inputSample, ch_bwa_index, ch_fasta)
-    PICARD_MARKDUPLICATES(BWA_MEM.out.bam)
+    ch_bwa_index = BWA_INDEX(ch_fasta, resources).index
+    BWA_MEM(inputSample, ch_bwa_index, ch_fasta, resources)
+    PICARD_MARKDUPLICATES(BWA_MEM.out.bam, resources)
 
 }
 
@@ -70,15 +71,16 @@ workflow DNA {
 workflow RNA {
     take:
         inputSample
+        resources // tuple val(cores), val(mem)
     // Check mandatory parameters
     if (params.fasta) { ch_fasta = file(params.fasta) } else { exit 1, 'Genome fasta file not specified!' }
     if (params.transcript_fasta) { ch_transcript_fasta = file(params.transcript_fasta) } else { exit 1, 'Transcript fasta file not specified!' }
     if (!params.gtf) { exit 1, "No GTF annotation specified!" }
     
     ch_salmon_index   = Channel.empty()
-    ch_salmon_index   = SALMON_INDEX( ch_fasta, ch_transcript_fasta ).index
+    ch_salmon_index   = SALMON_INDEX( ch_fasta, ch_transcript_fasta, resources ).index
     ch_dummy = Channel.empty()
-    SALMON_QUANT( reads, ch_salmon_index, gtf, ch_dummy, false)
+    SALMON_QUANT( reads, ch_salmon_index, gtf, ch_dummy, false, resources)
     
 }
 
@@ -92,6 +94,15 @@ workflow {
     inputSample = Channel.empty()
     inputSample = readInputFile(input, params.single_end)
     reference = file(params.reference)
+
+    ////////////////////////////////////////////////////////
+    /*           CREATING COMBINATION RESOURCES           */
+    ////////////////////////////////////////////////////////
+
+    cpulist = params.cpu ? Channel.from(params.cpu.split(',').collect{it.trim()})
+    memlist = params.mem ? Channel.from(params.mem.split(',').collect{it.trim()})
+    resources = cpulist.combine(memlist)
+
 
     if(params.mode == 'dna'){
         DNA(inputSample)

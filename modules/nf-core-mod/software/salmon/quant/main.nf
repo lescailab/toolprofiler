@@ -5,8 +5,17 @@ params.options = [:]
 def options    = initOptions(params.options)
 
 process SALMON_QUANT {
-    tag "$meta.id"
-    label "process_medium"
+    
+    //////////////////////////////////////
+    /* define resources for profiling   */
+    //////////////////////////////////////
+    cpus = cores as int 
+    memory = "${mem}.GB" as nextflow.util.MemoryUnit
+    // tag the process for easier tracking on trace out
+    def tagName = getSoftwareName(task.process)
+    def tagMemory = task.memory.toGiga()
+    tag "${tagName}:${task.cpus}:${tagMemory}"
+    
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
         saveAs: { filename -> saveFiles(filename:filename, options:params.options, publish_dir:getSoftwareName(task.process), publish_id:meta.id) }
@@ -24,6 +33,7 @@ process SALMON_QUANT {
     path  gtf
     path  transcript_fasta
     val   alignment_mode
+    tuple val(cores), val(mem)
 
     output:
     tuple val(meta), path("${prefix}"), emit: results
