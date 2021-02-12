@@ -41,6 +41,12 @@ log.info Schema.params_summary_log(workflow, params, json_schema)
 /*          INCLUDE MODULES FOR TESTING           */
 ////////////////////////////////////////////////////
 
+def bwa_index_options = [:]
+def bwa_mem_options = [:]
+def markduplicates_options = [:]
+def salmon_index_options = [:]
+def salmon_quant_options = [:]
+
 include { BWA_INDEX } from './modules/nf-core-mod/software/bwa/index' addParams(bwa_index_options)
 include { BWA_MEM } from './modules/nf-core-mod/software/bwa/mem' addParams(bwa_mem_options)
 include { PICARD_MARKDUPLICATES } from './modules/nf-core-mod/software/picard/markduplicates' addParams(markduplicates_options)
@@ -49,20 +55,30 @@ include { SALMON_QUANT } from './modules/nf-core-mod/software/salmon/quant' addP
 
 
 workflow DNA {
+    take:
+        inputSample
+
+    if (params.fasta) { ch_fasta = file(params.fasta) } else { exit 1, 'Genome fasta file not specified!' }
+    ch_bwa_index = Channel.empty()
+    ch_bwa_index = BWA_INDEX(ch_fasta).index
+    BWA_MEM(inputSample, ch_bwa_index, ch_fasta)
+    PICARD_MARKDUPLICATES(BWA_MEM.out.bam)
 
 }
 
 
 workflow RNA {
+    take:
+        inputSample
     // Check mandatory parameters
-    if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
     if (params.fasta) { ch_fasta = file(params.fasta) } else { exit 1, 'Genome fasta file not specified!' }
     if (params.transcript_fasta) { ch_transcript_fasta = file(params.transcript_fasta) } else { exit 1, 'Transcript fasta file not specified!' }
     if (!params.gtf) { exit 1, "No GTF annotation specified!" }
     
     ch_salmon_index   = Channel.empty()
     ch_salmon_index   = SALMON_INDEX( ch_fasta, ch_transcript_fasta ).index
-    SALMON_QUANT( reads, ch_salmon_index, gtf, ch_transcript_fasta, alignment_mode)
+    ch_dummy = Channel.empty()
+    SALMON_QUANT( reads, ch_salmon_index, gtf, ch_dummy, false)
     
 }
 
@@ -78,10 +94,10 @@ workflow {
     reference = file(params.reference)
 
     if(params.mode == 'dna'){
-        DNA(inputSample, reference)
+        DNA(inputSample)
     }
     else {
-        RNA(inputSample, reference)
+        RNA(inputSample)
     }
 
 
