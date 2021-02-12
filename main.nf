@@ -69,6 +69,13 @@ workflow {
     inputSample = readInputFile(input, params.single_end)
     reference = file(params.reference)
 
+    if(params.mode == 'dna'){
+        DNA(inputSample, reference)
+    }
+    else {
+        RNA(inputSample, reference)
+    }
+
 
 
 }
