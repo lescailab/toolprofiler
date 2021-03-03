@@ -105,10 +105,10 @@ workflow {
 
 
     if(params.mode == 'dna'){
-        DNA(inputSample)
+        DNA(inputSample, resources)
     }
     else {
-        RNA(inputSample)
+        RNA(inputSample, resources)
     }
 
 

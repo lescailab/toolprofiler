@@ -9,8 +9,8 @@ process BWA_INDEX {
     //////////////////////////////////////
     /* define resources for profiling   */
     //////////////////////////////////////
-    cpus = cores as int 
-    memory = "${mem}.GB" as nextflow.util.MemoryUnit
+    def cpus = cores as int 
+    def memory = "${mem}.GB" as nextflow.util.MemoryUnit
     // tag the process for easier tracking on trace out
     def tagName = getSoftwareName(task.process)
     def tagMemory = task.memory.toGiga()
